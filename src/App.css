@@ -92,6 +92,11 @@ body {
   transform-origin: center bottom;
 }
 
+.cat-image--idle {
+  animation: spin 2s linear infinite;
+  transform-origin: center center;
+}
+
 .drag {
   -webkit-app-region: drag;
 }
@@ -108,5 +113,15 @@ body {
 
   50% {
     transform: translateY(-6px);
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
   }
 }

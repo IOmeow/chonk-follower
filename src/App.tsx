@@ -22,11 +22,13 @@ const DIRECTION_IMAGES = [
   "/cat/002.png",
   "/cat/003.png",
   "/cat/004.png",
-  "/cat/005.png",
+  "/cat/005.gif",
   "/cat/006.png",
   "/cat/007.png",
   "/cat/008.png",
 ];
+
+const IDLE_IMAGE = "/cat/000.png";
 
 function App() {
   const [cat, setCat] = useState<Point>(() => ({
@@ -49,16 +51,18 @@ function App() {
     x: window.innerWidth / 2,
     y: window.innerHeight / 2,
   });
+  const lastMouseMoveTime = useRef(Date.now());
+  const isIdle = useRef(false);
 
   const catStyle = useMemo(
     () => ({
       transform: `translate3d(${cat.x - settings.catSize / 2}px, ${
         cat.y - settings.catSize / 2
-      }px, 0)`,
+      }px, 0) scale(${isIdle.current ? 2.2 : 1})`,
       width: `${settings.catSize}px`,
       height: `${settings.catSize}px`,
     }),
-    [cat.x, cat.y, settings.catSize],
+    [cat.x, cat.y, settings.catSize, isIdle.current],
   );
 
   useEffect(() => {
@@ -74,6 +78,15 @@ function App() {
         windowOrigin.current = { x: 0, y: 0 };
       }
     };
+
+    const idleTimer = window.setInterval(() => {
+      const idleTime = Date.now() - lastMouseMoveTime.current;
+
+      if (!isIdle.current && idleTime >= 5000) {
+        isIdle.current = true;
+        setCatImage(IDLE_IMAGE);
+      }
+    }, 1000);
 
     void syncWindowBounds();
     void appWindow.setIgnoreCursorEvents(true);
@@ -92,6 +105,13 @@ function App() {
 
       lastCursor.current = localCursor;
       if (speed > 1.25) {
+        lastMouseMoveTime.current = Date.now();
+
+        if (isIdle.current) {
+          isIdle.current = false;
+          setCatImage(DIRECTION_IMAGES[currentDirection.current]);
+        }
+
         const inverseLength = speed || 1;
         lastMove.current = {
           x: dx / inverseLength,
@@ -143,6 +163,7 @@ function App() {
       unlistenMouse?.();
       unlistenSettings?.();
       window.removeEventListener("storage", handleStorage);
+      window.clearInterval(idleTimer);
     };
   }, [settings.followDistance]);
 
@@ -169,7 +190,7 @@ function App() {
   return (
     <main className="scene scene--transparent">
       <div className="cat-shell" style={catStyle}>
-        <img className="cat-image" src={catImage} alt="Cat following the mouse" draggable={false} />
+        <img className={`cat-image ${isIdle.current ? "cat-image--idle" : ""}`} src={catImage} alt="Cat following the mouse" draggable={false} />
       </div>
     </main>
   );
